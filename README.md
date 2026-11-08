@@ -32,14 +32,14 @@ The token stays in server memory for the session only; it is never written to di
 
 | Piece | File |
 | --- | --- |
-| 53×7 calendar model, dates start on the Sunday ~1 year ago | `src/ContributionArt/Services/ContributionGrid.cs` |
+| 53×7 calendar model, dates start on the Sunday ~1 year ago | `src/ContributionArt/Features/Canvas/ContributionGrid.cs` |
 | Predefined preset shapes | `src/ContributionArt/presets.json` |
-| Loading and saving presets | `src/ContributionArt/Services/PresetStore.cs` |
-| 3×5 pixel font | `src/ContributionArt/Services/Presets.cs` |
-| GitHub REST/GraphQL calls (user, busiest day, empty-repo check), behind `IGitHubClient` | `src/ContributionArt/Services/GitHubClient.cs` |
+| Loading and saving presets | `src/ContributionArt/Features/Presets/PresetStore.cs` |
+| 3×5 pixel font | `src/ContributionArt/Features/Canvas/PixelFont.cs` |
+| GitHub REST/GraphQL calls (user, busiest day, empty-repo check), behind `IGitHubClient` | `src/ContributionArt/Features/GitHub/GitHubClient.cs` |
 | GitHub API address, User-Agent and API version | `src/ContributionArt/appsettings.json` |
-| Builds history with LibGit2Sharp and pushes once over HTTPS | `src/ContributionArt/Services/GitPusher.cs` |
-| gitfiti-style bash script export | `src/ContributionArt/Services/ScriptExporter.cs` |
+| Builds history with LibGit2Sharp and pushes once over HTTPS | `src/ContributionArt/Features/GitHub/GitPusher.cs` |
+| gitfiti-style bash script export | `src/ContributionArt/Features/ScriptExport/ScriptExporter.cs` |
 | The UI | `src/ContributionArt/Components/Pages/Home.razor` |
 
 Each painted cell becomes `level × commits-per-level` empty commits dated 12:00 UTC on that

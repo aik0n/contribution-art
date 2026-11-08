@@ -1,12 +1,13 @@
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.Canvas;
+using ContributionArt.Features.Presets;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.Presets
 {
     [UnitTestTrait]
     public class PresetServiceCollectionExtensionsTests

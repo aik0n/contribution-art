@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>Holds the predefined presets and the presets saved by the user.</summary>
     public interface IPresetStore

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>Stops the application at startup when <c>presets.json</c> breaks a preset rule.</summary>
     public sealed class PresetOptionsValidator : IValidateOptions<PresetOptions>

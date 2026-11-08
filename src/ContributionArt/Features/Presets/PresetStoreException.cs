@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>A preset could not be read or saved. The message is written to be shown to the user.</summary>
     public sealed class PresetStoreException : Exception

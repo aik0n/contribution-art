@@ -1,4 +1,6 @@
-namespace ContributionArt.Services
+using ContributionArt.Features.Canvas;
+
+namespace ContributionArt.Features.Presets
 {
     /// <summary>The rules every preset must follow, and the conversion between stored rows and patterns.</summary>
     public static class PresetValidator

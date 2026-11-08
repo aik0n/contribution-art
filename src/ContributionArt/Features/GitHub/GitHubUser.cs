@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.GitHub
 {
     /// <summary>A GitHub account.</summary>
     public sealed class GitHubUser

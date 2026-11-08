@@ -2,7 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>
     /// Reads presets from the validated options and from the user file. Configuration can only read,

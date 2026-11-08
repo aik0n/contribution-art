@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>A preset ready to stamp. The pattern is indexed as <c>rows[day][x]</c>.</summary>
     public sealed class Preset

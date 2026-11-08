@@ -358,7 +358,7 @@
 
     private void StampText()
     {
-        _grid.Stamp(Presets.Text(_text, _brush == 0 ? 4 : _brush), GetStampWeekIndex(), skipZeros: true);
+        _grid.Stamp(PixelFont.Text(_text, _brush == 0 ? 4 : _brush), GetStampWeekIndex(), skipZeros: true);
     }
 
     private int GetStampWeekIndex()

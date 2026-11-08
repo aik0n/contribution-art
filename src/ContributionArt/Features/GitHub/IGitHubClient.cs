@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.GitHub
 {
     /// <summary>
     /// The GitHub operations the app needs. The token is per user, so it is passed on every call

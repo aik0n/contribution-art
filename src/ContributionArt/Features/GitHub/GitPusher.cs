@@ -1,29 +1,14 @@
+using ContributionArt.Features.Shared;
 using LibGit2Sharp;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.GitHub
 {
-    public sealed record CommitPlanItem(DateOnly Date, int Commits);
-
-    public sealed record PushRequest(
-        string Owner,
-        string Repository,
-        string Token,
-        string AuthorName,
-        string AuthorEmail,
-        DateOnly ReadmeDate,
-        IReadOnlyList<CommitPlanItem> Plan);
-
     /// <summary>
     /// Builds the whole history in a temporary local repository (backdated empty commits),
     /// then pushes it to GitHub in a single push over HTTPS.
     /// </summary>
     public sealed class GitPusher(ILogger<GitPusher> logger)
     {
-        public const string ReadmeText =
-            "# Contribution graph art\n\n" +
-            "This repository exists only to draw a picture on my GitHub contribution graph.\n" +
-            "Its commits are intentionally empty and backdated; they do not represent real work.\n";
-
         public Task<int> PushAsync(PushRequest request, IProgress<string> progress, CancellationToken ct) =>
             Task.Run(() => Push(request, progress, ct), ct);
 
@@ -36,7 +21,7 @@ namespace ContributionArt.Services
                 using var repo = new Repository(workDir);
 
                 // 1. README, dated just before the visible graph so it doesn't tint any pixel.
-                File.WriteAllText(Path.Combine(workDir, "README.md"), ReadmeText);
+                File.WriteAllText(Path.Combine(workDir, "README.md"), PublishedReadme.Text);
                 Commands.Stage(repo, "README.md");
                 var readmeSignature = Sign(request, request.ReadmeDate, 0);
                 repo.Commit("Add README: this repository is contribution-graph art", readmeSignature, readmeSignature);

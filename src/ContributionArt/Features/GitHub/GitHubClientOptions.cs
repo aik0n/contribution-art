@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.GitHub
 {
     /// <summary>Connection settings for the GitHub API, bound from the <c>GitHub</c> configuration section.</summary>
     public sealed class GitHubClientOptions

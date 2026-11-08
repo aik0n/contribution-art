@@ -1,11 +1,12 @@
 using System.Text.Json;
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.Canvas;
+using ContributionArt.Features.Presets;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.Presets
 {
     [UnitTestTrait]
     public sealed class PresetStoreTests : IDisposable

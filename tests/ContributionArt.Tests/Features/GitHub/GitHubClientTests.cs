@@ -1,12 +1,12 @@
 using System.Net;
 using System.Text.Json;
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.GitHub;
 using ContributionArt.Tests.TestDoubles;
 using FluentAssertions;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.GitHub
 {
     [UnitTestTrait]
     public sealed class GitHubClientTests : IDisposable

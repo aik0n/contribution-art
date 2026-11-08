@@ -1,7 +1,7 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Canvas
 {
     /// <summary>A tiny 3x5 pixel font. Rendered text is 7 rows tall (Sunday..Saturday). Shapes live in presets.json.</summary>
-    public static class Presets
+    public static class PixelFont
     {
         // 3 columns x 5 rows per glyph, written row by row.
         private static readonly Dictionary<char, string> Font = new()

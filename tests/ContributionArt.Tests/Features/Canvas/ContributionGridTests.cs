@@ -1,9 +1,9 @@
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.Canvas;
 using FluentAssertions;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.Canvas
 {
     [UnitTestTrait]
     public class ContributionGridTests

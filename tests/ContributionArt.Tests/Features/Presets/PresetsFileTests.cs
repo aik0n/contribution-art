@@ -1,9 +1,9 @@
-using ContributionArt.Services;
+using ContributionArt.Features.Presets;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.Presets
 {
     /// <summary>Checks the <c>presets.json</c> file that ships with the application.</summary>
     [UnitTestTrait]

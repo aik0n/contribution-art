@@ -1,9 +1,9 @@
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.GitHub;
 using FluentAssertions;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.GitHub
 {
     [UnitTestTrait]
     public class GitHubUserTests

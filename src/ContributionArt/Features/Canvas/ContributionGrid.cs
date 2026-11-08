@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Canvas
 {
     /// <summary>
     /// The drawing canvas. It mirrors GitHub's contribution calendar exactly:

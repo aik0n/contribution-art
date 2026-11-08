@@ -1,9 +1,10 @@
 using Bogus;
-using ContributionArt.Services;
+using ContributionArt.Features.Canvas;
+using ContributionArt.Features.Presets;
 using FluentAssertions;
 using Xunit;
 
-namespace ContributionArt.Tests.Services
+namespace ContributionArt.Tests.Features.Presets
 {
     [UnitTestTrait]
     public class PresetValidatorTests

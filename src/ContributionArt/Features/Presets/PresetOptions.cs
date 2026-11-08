@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>Preset settings, bound from the <c>Presets</c> configuration section.</summary>
     public sealed class PresetOptions

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>Registers the preset store. This is the one place to swap the implementation.</summary>
     public static class PresetServiceCollectionExtensions

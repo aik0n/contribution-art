@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.GitHub
 {
     /// <summary>Registers the GitHub client. This is the one place to swap the implementation.</summary>
     public static class GitHubServiceCollectionExtensions

@@ -1,6 +1,7 @@
 using System.Text;
+using ContributionArt.Features.Shared;
 
-namespace ContributionArt.Services
+namespace ContributionArt.Features.ScriptExport
 {
     /// <summary>Produces a gitfiti-style bash script, for people who prefer to run git themselves.</summary>
     public static class ScriptExporter
@@ -21,7 +22,7 @@ namespace ContributionArt.Services
             sb.AppendLine($"git config user.email {Quote(authorEmail)}");
             sb.AppendLine();
             sb.AppendLine("cat > README.md <<'EOF'");
-            sb.Append(GitPusher.ReadmeText);
+            sb.Append(PublishedReadme.Text);
             sb.AppendLine("EOF");
             sb.AppendLine("git add README.md");
             sb.AppendLine($"GIT_AUTHOR_DATE={Stamp(readmeDate)} GIT_COMMITTER_DATE={Stamp(readmeDate)} " +

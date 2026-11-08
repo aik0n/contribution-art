@@ -1,4 +1,4 @@
-namespace ContributionArt.Services
+namespace ContributionArt.Features.Presets
 {
     /// <summary>A preset as stored in JSON. Each row is one day, and each digit is the level for one week.</summary>
     public sealed class PresetDefinition
