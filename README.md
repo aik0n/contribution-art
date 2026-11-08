@@ -6,14 +6,14 @@ repository as backdated, empty commits — a Blazor Server take on
 
 ## Run it
 
-Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download).
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
 cd contribution-art
-dotnet run
+dotnet run --project src/ContributionArt
 ```
 
-Open the URL it prints (usually http://localhost:5000).
+Open the URL it prints (https://localhost:61576 or http://localhost:61577).
 
 ## Before you push
 
@@ -32,12 +32,12 @@ The token stays in server memory for the session only; it is never written to di
 
 | Piece | File |
 | --- | --- |
-| 53×7 calendar model, dates start on the Sunday ~1 year ago | `Services/ContributionGrid.cs` |
-| Preset shapes and a 3×5 pixel font | `Services/Presets.cs` |
-| GitHub REST/GraphQL calls (user, busiest day, empty-repo check) | `Services/GitHubClient.cs` |
-| Builds history with LibGit2Sharp and pushes once over HTTPS | `Services/GitPusher.cs` |
-| gitfiti-style bash script export | `Services/ScriptExporter.cs` |
-| The UI | `Components/Pages/Home.razor` |
+| 53×7 calendar model, dates start on the Sunday ~1 year ago | `src/ContributionArt/Services/ContributionGrid.cs` |
+| Preset shapes and a 3×5 pixel font | `src/ContributionArt/Services/Presets.cs` |
+| GitHub REST/GraphQL calls (user, busiest day, empty-repo check) | `src/ContributionArt/Services/GitHubClient.cs` |
+| Builds history with LibGit2Sharp and pushes once over HTTPS | `src/ContributionArt/Services/GitPusher.cs` |
+| gitfiti-style bash script export | `src/ContributionArt/Services/ScriptExporter.cs` |
+| The UI | `src/ContributionArt/Components/Pages/Home.razor` |
 
 Each painted cell becomes `level × commits-per-level` empty commits dated 12:00 UTC on that
 day. A README stating that the repository is contribution-graph art is committed first, dated
