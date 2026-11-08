@@ -61,6 +61,46 @@ namespace ContributionArt.Services
             }
         }
 
+        /// <summary>
+        /// Exports the painting as a 7-row pattern for <see cref="Stamp"/>, covering the first to the last painted week.
+        /// Blank weeks in between are kept. An empty canvas returns an empty array.
+        /// </summary>
+        public int[][] ToPattern()
+        {
+            var firstWeek = -1;
+            var lastWeek = -1;
+
+            for (var week = 0; week < Weeks; week++)
+            {
+                for (var day = 0; day < Days; day++)
+                {
+                    if (_levels[week, day] > 0)
+                    {
+                        firstWeek = firstWeek < 0 ? week : firstWeek;
+                        lastWeek = week;
+                    }
+                }
+            }
+
+            if (firstWeek < 0)
+            {
+                return [];
+            }
+
+            var width = lastWeek - firstWeek + 1;
+            var rows = new int[Days][];
+            for (var day = 0; day < Days; day++)
+            {
+                rows[day] = new int[width];
+                for (var x = 0; x < width; x++)
+                {
+                    rows[day][x] = _levels[firstWeek + x, day];
+                }
+            }
+
+            return rows;
+        }
+
         /// <summary>All painted cells, oldest first.</summary>
         public IEnumerable<(DateOnly Date, int Level)> Pixels()
         {

@@ -33,7 +33,9 @@ The token stays in server memory for the session only; it is never written to di
 | Piece | File |
 | --- | --- |
 | 53×7 calendar model, dates start on the Sunday ~1 year ago | `src/ContributionArt/Services/ContributionGrid.cs` |
-| Preset shapes and a 3×5 pixel font | `src/ContributionArt/Services/Presets.cs` |
+| Predefined preset shapes | `src/ContributionArt/presets.json` |
+| Loading and saving presets | `src/ContributionArt/Services/PresetStore.cs` |
+| 3×5 pixel font | `src/ContributionArt/Services/Presets.cs` |
 | GitHub REST/GraphQL calls (user, busiest day, empty-repo check), behind `IGitHubClient` | `src/ContributionArt/Services/GitHubClient.cs` |
 | GitHub API address, User-Agent and API version | `src/ContributionArt/appsettings.json` |
 | Builds history with LibGit2Sharp and pushes once over HTTPS | `src/ContributionArt/Services/GitPusher.cs` |
@@ -46,6 +48,22 @@ the day before the visible graph so it doesn't colour any pixel.
 
 **Prefer to run git yourself?** Use *Download bash script* instead of *Push to GitHub*. The
 script needs git 2.28+ and SSH access to GitHub.
+
+## Presets
+
+Built-in shapes are in `presets.json`. The app does not start if that file is missing or invalid.
+
+*Save as preset* stores the current painting in `presets-user.json`, cropped to the painted weeks.
+The file is in `%LocalAppData%/ContributionArt` (on Linux, `~/.local/share/ContributionArt`), so it
+survives restarts and rebuilds. Set `Presets:UserFilePath` in `appsettings.json` to use another
+location. Each row is one day, and each digit is the level for one week:
+
+```json
+{ "Presets": [ { "Name": "My drawing", "Rows": ["12", "12", "12", "12", "12", "12", "12"] } ] }
+```
+
+After editing the file by hand, press *Reload*. Saved presets are shared by everyone using the same
+running app, so add access control before hosting it publicly.
 
 ## Notes
 

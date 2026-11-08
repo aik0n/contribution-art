@@ -1,6 +1,7 @@
 @page "/"
 @implements IDisposable
 @inject IGitHubClient GitHub
+@inject IPresetStore Store
 @inject GitPusher Pusher
 @inject IJSRuntime JS
 
@@ -67,12 +68,19 @@
 
             <div class="group">
                 <select @bind="_preset">
-                    @foreach (var name in Presets.Shapes.Keys)
+                    @foreach (var preset in Store.Presets)
                     {
-                        <option value="@name">@name</option>
+                        <option value="@preset.Name">@preset.Name</option>
                     }
                 </select>
                 <button @onclick="StampPreset">Stamp</button>
+                <button class="ghost" title="Read saved presets from the file again" @onclick="ReloadPresets">Reload</button>
+            </div>
+
+            <div class="group">
+                <input class="preset-name" @bind="_newPresetName" @bind:event="oninput"
+                       maxlength="@PresetValidator.MaxNameLength" placeholder="Preset name" />
+                <button disabled="@(PixelCount == 0 || string.IsNullOrWhiteSpace(_newPresetName))" @onclick="SavePreset">Save as preset</button>
             </div>
 
             <div class="group">
@@ -82,7 +90,7 @@
 
             <label class="group">
                 at week
-                <input class="narrow" type="number" min="0" max="52" @bind="_offset" />
+                <input class="narrow" type="number" min="1" max="@ContributionGrid.Weeks" @bind="_startWeek" />
             </label>
 
             <button class="ghost" @onclick="() => _grid.Clear()">Clear</button>
@@ -115,9 +123,19 @@
                         }
                     </div>
                 </div>
+                <div class="week-numbers">
+                    @foreach (var w in WeekIndexes)
+                    {
+                        <span>@WeekNumberLabel(w)</span>
+                    }
+                </div>
             </div>
         </div>
         <p class="hint">Click or drag to paint. Clicking a cell that already has the brush level clears it.</p>
+        @if (_presetMessage is not null)
+        {
+            <p class="@(_presetMessageIsError ? "error" : "success")">@_presetMessage</p>
+        }
     </section>
 
     <section class="panel">
@@ -181,9 +199,12 @@
     private int _brush = 4;
     private int _paintLevel;
     private bool _painting;
-    private string _preset = Presets.Shapes.Keys.First();
+    private string _preset = "";
+    private string _newPresetName = "";
+    private string? _presetMessage;
+    private bool _presetMessageIsError;
     private string _text = "HELLO";
-    private int _offset = 2;
+    private int _startWeek = 3;
 
     // Status
     private bool _busy;
@@ -198,6 +219,11 @@
     private bool CanPush => _connected && !_busy && PixelCount > 0
                             && !string.IsNullOrWhiteSpace(_repository)
                             && !string.IsNullOrWhiteSpace(_authorEmail);
+
+    protected override void OnInitialized()
+    {
+        _preset = Store.Presets[0].Name;
+    }
 
     private void StartPaint(int week, int day)
     {
@@ -216,10 +242,77 @@
 
     private void StopPaint() => _painting = false;
 
-    private void StampPreset() => _grid.Stamp(Presets.Shapes[_preset], Math.Clamp(_offset, 0, 52));
+    private void StampPreset()
+    {
+        var preset = FindPreset(_preset);
+        if (preset is not null)
+        {
+            _grid.Stamp(preset.Pattern, GetStampWeekIndex());
+        }
+    }
 
-    private void StampText() =>
-        _grid.Stamp(Presets.Text(_text, _brush == 0 ? 4 : _brush), Math.Clamp(_offset, 0, 52), skipZeros: true);
+    private void SavePreset()
+    {
+        try
+        {
+            var name = _newPresetName.Trim();
+            Store.SaveUserPreset(name, _grid.ToPattern());
+            _preset = name;
+            _newPresetName = "";
+            ShowPresetMessage($"Saved preset “{name}”.", isError: false);
+        }
+        catch (PresetStoreException ex)
+        {
+            ShowPresetMessage(ex.Message, isError: true);
+        }
+    }
+
+    private void ReloadPresets()
+    {
+        try
+        {
+            Store.ReloadUserPresets();
+            if (FindPreset(_preset) is null)
+            {
+                _preset = Store.Presets[0].Name;
+            }
+
+            ShowPresetMessage($"Reloaded. {Store.Presets.Count} presets available.", isError: false);
+        }
+        catch (PresetStoreException ex)
+        {
+            ShowPresetMessage(ex.Message, isError: true);
+        }
+    }
+
+    private Preset? FindPreset(string name)
+    {
+        foreach (var preset in Store.Presets)
+        {
+            if (preset.Name == name)
+            {
+                return preset;
+            }
+        }
+
+        return null;
+    }
+
+    private void ShowPresetMessage(string message, bool isError)
+    {
+        _presetMessage = message;
+        _presetMessageIsError = isError;
+    }
+
+    private void StampText()
+    {
+        _grid.Stamp(Presets.Text(_text, _brush == 0 ? 4 : _brush), GetStampWeekIndex(), skipZeros: true);
+    }
+
+    private int GetStampWeekIndex()
+    {
+        return Math.Clamp(_startWeek, 1, ContributionGrid.Weeks) - 1;
+    }
 
     private async Task ConnectAsync()
     {
@@ -306,6 +399,17 @@
     {
         var sunday = _grid.DateAt(week, 0);
         return sunday.Day <= 7 ? sunday.ToString("MMM", CultureInfo.InvariantCulture) : "";
+    }
+
+    private static string WeekNumberLabel(int week)
+    {
+        var number = week + 1;
+        if (number == 1 || number % 10 == 0)
+        {
+            return number.ToString(CultureInfo.InvariantCulture);
+        }
+
+        return "";
     }
 
     private string CellTitle(int week, int day, int level, bool future)

@@ -1,44 +1,8 @@
 namespace ContributionArt.Services
 {
-    /// <summary>Ready-made shapes and a tiny 3x5 pixel font. Every pattern is 7 rows tall (Sunday..Saturday).</summary>
+    /// <summary>A tiny 3x5 pixel font. Rendered text is 7 rows tall (Sunday..Saturday). Shapes live in presets.json.</summary>
     public static class Presets
     {
-        public static readonly IReadOnlyDictionary<string, int[][]> Shapes = new Dictionary<string, int[][]>
-        {
-            ["Heart"] =
-            [
-                [0, 3, 3, 0, 0, 0, 3, 3, 0],
-                [3, 4, 4, 3, 0, 3, 4, 4, 3],
-                [3, 4, 4, 4, 3, 4, 4, 4, 3],
-                [0, 3, 4, 4, 4, 4, 4, 3, 0],
-                [0, 0, 3, 4, 4, 4, 3, 0, 0],
-                [0, 0, 0, 3, 4, 3, 0, 0, 0],
-                [0, 0, 0, 0, 3, 0, 0, 0, 0],
-            ],
-            ["Cat"] =
-            [
-                [4, 0, 0, 0, 0, 0, 4],
-                [4, 4, 0, 0, 0, 4, 4],
-                [4, 4, 4, 4, 4, 4, 4],
-                [4, 1, 4, 4, 4, 1, 4],
-                [4, 4, 4, 2, 4, 4, 4],
-                [0, 4, 4, 4, 4, 4, 0],
-                [0, 0, 4, 4, 4, 0, 0],
-            ],
-            ["Gliders"] =
-            [
-                [0, 4, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 4, 0, 0, 0, 0, 0, 0],
-                [4, 4, 4, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 4, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 4, 0],
-                [0, 0, 0, 0, 0, 4, 4, 4, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            ],
-            ["Wave"] = BuildWave(26),
-            ["Gradient"] = BuildGradient(),
-        };
-
         // 3 columns x 5 rows per glyph, written row by row.
         private static readonly Dictionary<char, string> Font = new()
         {
@@ -83,28 +47,6 @@ namespace ContributionArt.Services
             }
 
             return rows;
-        }
-
-        private static int[][] BuildWave(int width)
-        {
-            var rows = Enumerable.Range(0, ContributionGrid.Days).Select(_ => new int[width]).ToArray();
-            for (var x = 0; x < width; x++)
-            {
-                var crest = (int)Math.Round(3 + 2.6 * Math.Sin(x * Math.PI / 6.5));
-                for (var y = 0; y < ContributionGrid.Days; y++)
-                {
-                    var distance = Math.Abs(y - crest);
-                    rows[y][x] = distance switch { 0 => 4, 1 => 2, _ => 0 };
-                }
-            }
-
-            return rows;
-        }
-
-        private static int[][] BuildGradient()
-        {
-            int[] levels = [1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 2, 2, 1, 1];
-            return Enumerable.Range(0, ContributionGrid.Days).Select(_ => levels.ToArray()).ToArray();
         }
     }
 }
