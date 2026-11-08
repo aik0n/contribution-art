@@ -6,13 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient<GitHubClient>(client =>
-{
-    client.BaseAddress = new Uri("https://api.github.com/");
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("ContributionArt/1.0");
-    client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
-    client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
-});
+builder.Services.AddGitHubClient(builder.Configuration);
 
 builder.Services.AddSingleton<GitPusher>();
 

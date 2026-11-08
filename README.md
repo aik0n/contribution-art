@@ -34,7 +34,8 @@ The token stays in server memory for the session only; it is never written to di
 | --- | --- |
 | 53×7 calendar model, dates start on the Sunday ~1 year ago | `src/ContributionArt/Services/ContributionGrid.cs` |
 | Preset shapes and a 3×5 pixel font | `src/ContributionArt/Services/Presets.cs` |
-| GitHub REST/GraphQL calls (user, busiest day, empty-repo check) | `src/ContributionArt/Services/GitHubClient.cs` |
+| GitHub REST/GraphQL calls (user, busiest day, empty-repo check), behind `IGitHubClient` | `src/ContributionArt/Services/GitHubClient.cs` |
+| GitHub API address, User-Agent and API version | `src/ContributionArt/appsettings.json` |
 | Builds history with LibGit2Sharp and pushes once over HTTPS | `src/ContributionArt/Services/GitPusher.cs` |
 | gitfiti-style bash script export | `src/ContributionArt/Services/ScriptExporter.cs` |
 | The UI | `src/ContributionArt/Components/Pages/Home.razor` |

@@ -6,44 +6,33 @@ using System.Text.Json;
 namespace ContributionArt.Services
 {
     /// <summary>Thin wrapper over the few GitHub REST/GraphQL calls the app needs.</summary>
-    public sealed class GitHubClient(HttpClient http)
+    public sealed class GitHubClient(HttpClient http) : IGitHubClient
     {
-        public sealed record GitHubUser(string Login, long Id, string? Name)
-        {
-            /// <summary>GitHub's private no-reply address. Commits with it always count toward the account.</summary>
-            public string NoReplyEmail => $"{Id}+{Login}@users.noreply.github.com";
-        }
+        private const string BearerScheme = "Bearer";
+        private const int MaxErrorSnippetLength = 300;
 
+        /// <inheritdoc />
         public async Task<GitHubUser> GetUserAsync(string token, CancellationToken ct = default)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "user");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var request = CreateRequest(HttpMethod.Get, "user", token);
 
-            using var response = await http.SendAsync(request, ct);
-            await EnsureSuccessAsync(response, ct);
+            var json = await SendForJsonAsync(request, ct);
 
-            var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
             var name = json.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null;
             return new GitHubUser(json.GetProperty("login").GetString()!, json.GetProperty("id").GetInt64(), name);
         }
 
-        /// <summary>Highest number of contributions on a single day in the last year (used to scale colour levels).</summary>
+        /// <inheritdoc />
         public async Task<int> GetMaxDailyContributionsAsync(string token, string login, CancellationToken ct = default)
         {
             const string query =
                 "query($login: String!) { user(login: $login) { contributionsCollection { " +
                 "contributionCalendar { weeks { contributionDays { contributionCount } } } } } }";
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, "graphql")
-            {
-                Content = JsonContent.Create(new { query, variables = new { login } }),
-            };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var request = CreateRequest(HttpMethod.Post, "graphql", token);
+            request.Content = JsonContent.Create(new { query, variables = new { login } });
 
-            using var response = await http.SendAsync(request, ct);
-            await EnsureSuccessAsync(response, ct);
-
-            var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            var json = await SendForJsonAsync(request, ct);
             if (json.TryGetProperty("errors", out var errors))
             {
                 throw new InvalidOperationException($"GitHub GraphQL error: {errors}");
@@ -64,12 +53,11 @@ namespace ContributionArt.Services
             return max;
         }
 
-        /// <summary>True if the repository exists and has no commits yet.</summary>
+        /// <inheritdoc />
         public async Task<bool> IsRepositoryEmptyAsync(string token, string owner, string repo, CancellationToken ct = default)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get,
-                $"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/commits?per_page=1");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var request = CreateRequest(HttpMethod.Get,
+                $"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/commits?per_page=1", token);
 
             using var response = await http.SendAsync(request, ct);
             return response.StatusCode switch
@@ -78,24 +66,33 @@ namespace ContributionArt.Services
                 HttpStatusCode.OK => false,
                 HttpStatusCode.NotFound => throw new InvalidOperationException(
                     $"Repository {owner}/{repo} was not found, or the token has no access to it. Create it on GitHub first (empty, no README)."),
-                _ => throw new InvalidOperationException(
-                    $"GitHub API returned {(int)response.StatusCode}: {await ReadSnippetAsync(response, ct)}"),
+                _ => throw await CreateApiErrorAsync(response, ct),
             };
         }
 
-        private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
+        private static HttpRequestMessage CreateRequest(HttpMethod method, string uri, string token)
         {
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException(
-                    $"GitHub API returned {(int)response.StatusCode}: {await ReadSnippetAsync(response, ct)}");
-            }
+            var request = new HttpRequestMessage(method, uri);
+            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, token);
+            return request;
         }
 
-        private static async Task<string> ReadSnippetAsync(HttpResponseMessage response, CancellationToken ct)
+        private async Task<JsonElement> SendForJsonAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            using var response = await http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw await CreateApiErrorAsync(response, ct);
+            }
+
+            return await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+        }
+
+        private static async Task<InvalidOperationException> CreateApiErrorAsync(HttpResponseMessage response, CancellationToken ct)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            return body.Length > 300 ? body[..300] + "…" : body;
+            var snippet = body.Length > MaxErrorSnippetLength ? body[..MaxErrorSnippetLength] + "…" : body;
+            return new InvalidOperationException($"GitHub API returned {(int)response.StatusCode}: {snippet}");
         }
     }
 }
