@@ -1,0 +1,135 @@
+:root {
+    --bg: #f6f8fa;
+    --panel: #ffffff;
+    --text: #1f2328;
+    --muted: #59636e;
+    --border: #d1d9e0;
+    --accent: #1f883d;
+    --accent-text: #ffffff;
+    --error: #cf222e;
+    --warn: #9a6700;
+    --l0: #ebedf0;
+    --l1: #9be9a8;
+    --l2: #40c463;
+    --l3: #30a14e;
+    --l4: #216e39;
+    --cell: 12px;
+    --gap: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1117;
+        --panel: #151b23;
+        --text: #e6edf3;
+        --muted: #9198a1;
+        --border: #3d444d;
+        --accent: #238636;
+        --error: #f85149;
+        --warn: #d29922;
+        --l0: #212830;
+        --l1: #0e4429;
+        --l2: #006d32;
+        --l3: #26a641;
+        --l4: #39d353;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.page { max-width: 1000px; margin: 0 auto; padding: 24px 16px 48px; }
+
+h1 { margin: 0 0 4px; font-size: 28px; }
+h2 { margin: 0 0 12px; font-size: 16px; }
+.lead { margin: 0 0 20px; color: var(--muted); max-width: 70ch; }
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.fields.compact { margin-top: 16px; margin-bottom: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+label small { font-weight: 400; color: var(--muted); }
+
+input, select, button {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+
+button { cursor: pointer; font-weight: 600; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+button.ghost { background: transparent; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+.group { display: flex; flex-direction: row; align-items: center; gap: 6px; font-weight: 400; }
+.narrow { width: 64px; }
+.text-input { width: 140px; text-transform: uppercase; }
+
+.swatches { display: flex; gap: 4px; }
+.swatch { width: 28px; height: 28px; padding: 0; border-radius: 6px; font-size: 12px; color: var(--muted); }
+.swatch.active { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.l0 { background: var(--l0); }
+.l1 { background: var(--l1); }
+.l2 { background: var(--l2); }
+.l3 { background: var(--l3); }
+.l4 { background: var(--l4); }
+
+.calendar-scroll { overflow-x: auto; padding-bottom: 4px; }
+.calendar { display: inline-block; user-select: none; }
+.months {
+    display: grid;
+    grid-template-columns: repeat(53, var(--cell));
+    gap: var(--gap);
+    margin-left: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    height: 16px;
+}
+.months span { white-space: nowrap; overflow: visible; }
+.calendar-body { display: flex; }
+.weekdays {
+    display: grid;
+    grid-template-rows: repeat(7, var(--cell));
+    gap: var(--gap);
+    width: 32px;
+    font-size: 10px;
+    line-height: var(--cell);
+    color: var(--muted);
+}
+.grid {
+    display: grid;
+    grid-template-rows: repeat(7, var(--cell));
+    grid-auto-flow: column;
+    grid-auto-columns: var(--cell);
+    gap: var(--gap);
+}
+.cell { width: var(--cell); height: var(--cell); border-radius: 2px; cursor: crosshair; outline: 1px solid rgba(27, 31, 36, .06); outline-offset: -1px; }
+.cell:hover { outline: 1px solid var(--text); }
+.cell.future { visibility: hidden; }
+
+.hint, .summary { color: var(--muted); margin: 10px 0 0; }
+.summary strong { color: var(--text); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.status { margin: 12px 0 0; }
+.error { margin: 12px 0 0; color: var(--error); }
+.warn { color: var(--warn); }
+.success { margin: 12px 0 0; color: var(--accent); }
+.success a { color: inherit; font-weight: 600; }

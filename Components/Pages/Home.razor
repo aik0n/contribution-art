@@ -1,0 +1,318 @@
+@page "/"
+@implements IDisposable
+@inject GitHubClient GitHub
+@inject GitPusher Pusher
+@inject IJSRuntime JS
+
+<PageTitle>Contribution Art</PageTitle>
+
+<main class="page">
+    <header>
+        <h1>Contribution Art</h1>
+        <p class="lead">
+            Paint on a copy of your contribution calendar, then push it as backdated empty commits to a
+            dedicated repository. The repository gets a README saying it is art, so nothing is misleading.
+        </p>
+    </header>
+
+    <section class="panel">
+        <h2>1 · Connect</h2>
+        <div class="fields">
+            <label>
+                GitHub token
+                <input type="password" @bind="_token" placeholder="github_pat_…" autocomplete="off" />
+                <small>Fine-grained token, access to the art repository only, permission <em>Contents: Read and write</em>.</small>
+            </label>
+            <label>
+                Repository name
+                <input @bind="_repository" placeholder="contribution-graphics" />
+                <small>Create it on GitHub first: new, empty, no README.</small>
+            </label>
+        </div>
+        <button class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_token))" @onclick="ConnectAsync">
+            @(_connected ? "Reconnect" : "Connect")
+        </button>
+
+        @if (_connected)
+        {
+            <div class="fields compact">
+                <label>Owner <input @bind="_owner" /></label>
+                <label>Author name <input @bind="_authorName" /></label>
+                <label>
+                    Author email <input @bind="_authorEmail" />
+                    <small>Must be linked to your account, or commits won't show. The no-reply address always works.</small>
+                </label>
+                <label>
+                    Commits per level
+                    <input type="number" min="1" max="50" @bind="_multiplier" />
+                    <small>Your busiest day: @_maxDaily contributions. Shades are relative to it, so dark pixels need more commits.</small>
+                </label>
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <h2>2 · Paint</h2>
+
+        <div class="toolbar">
+            <div class="swatches" role="radiogroup" aria-label="Brush level">
+                @for (var l = 0; l <= ContributionGrid.MaxLevel; l++)
+                {
+                    var level = l;
+                    <button class="swatch l@(level) @(_brush == level ? "active" : "")"
+                            title="@(level == 0 ? "Eraser" : $"Level {level}")"
+                            @onclick="() => _brush = level">@(level == 0 ? "✕" : "")</button>
+                }
+            </div>
+
+            <div class="group">
+                <select @bind="_preset">
+                    @foreach (var name in Presets.Shapes.Keys)
+                    {
+                        <option value="@name">@name</option>
+                    }
+                </select>
+                <button @onclick="StampPreset">Stamp</button>
+            </div>
+
+            <div class="group">
+                <input class="text-input" @bind="_text" @bind:event="oninput" maxlength="13" placeholder="TEXT" />
+                <button disabled="@(string.IsNullOrWhiteSpace(_text))" @onclick="StampText">Write</button>
+            </div>
+
+            <label class="group">
+                at week
+                <input class="narrow" type="number" min="0" max="52" @bind="_offset" />
+            </label>
+
+            <button class="ghost" @onclick="() => _grid.Clear()">Clear</button>
+        </div>
+
+        <div class="calendar-scroll">
+            <div class="calendar" @onmouseup="StopPaint" @onmouseleave="StopPaint">
+                <div class="months">
+                    @foreach (var w in WeekIndexes)
+                    {
+                        <span>@MonthLabel(w)</span>
+                    }
+                </div>
+                <div class="calendar-body">
+                    <div class="weekdays">
+                        <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+                    </div>
+                    <div class="grid">
+                        @foreach (var w in WeekIndexes)
+                        {
+                            foreach (var d in DayIndexes)
+                            {
+                                var level = _grid.Get(w, d);
+                                var future = _grid.IsFuture(w, d);
+                                <div class="cell l@(level) @(future ? "future" : "")"
+                                     title="@CellTitle(w, d, level, future)"
+                                     @onmousedown="() => StartPaint(w, d)" @onmousedown:preventDefault="true"
+                                     @onmouseenter="() => ContinuePaint(w, d)"></div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="hint">Click or drag to paint. Clicking a cell that already has the brush level clears it.</p>
+    </section>
+
+    <section class="panel">
+        <h2>3 · Publish</h2>
+        <p class="summary">
+            <strong>@PixelCount</strong> pixels · <strong>@TotalCommits</strong> commits
+            · graph from @_grid.StartDate.ToString("d MMM yyyy", CultureInfo.InvariantCulture)
+            to @_grid.Today.ToString("d MMM yyyy", CultureInfo.InvariantCulture)
+        </p>
+        @if (TotalCommits > 5000)
+        {
+            <p class="warn">That's a lot of commits. Consider lowering “commits per level”.</p>
+        }
+
+        <div class="actions">
+            <button class="primary" disabled="@(!CanPush)" @onclick="PushAsync">Push to GitHub</button>
+            <button disabled="@(PixelCount == 0 || string.IsNullOrWhiteSpace(_owner))" @onclick="DownloadScriptAsync">
+                Download bash script
+            </button>
+            @if (_busy && _cts is not null)
+            {
+                <button class="ghost" @onclick="() => _cts.Cancel()">Cancel</button>
+            }
+        </div>
+
+        @if (_status is not null)
+        {
+            <p class="status">@_status</p>
+        }
+        @if (_error is not null)
+        {
+            <p class="error">@_error</p>
+        }
+        @if (_resultUrl is not null)
+        {
+            <p class="success">
+                Done. See <a href="@_resultUrl" target="_blank" rel="noopener">@_owner/@_repository</a>.
+                The graph can take a few minutes (sometimes up to a day) to update.
+            </p>
+        }
+    </section>
+</main>
+
+@code {
+    private static readonly int[] WeekIndexes = Enumerable.Range(0, ContributionGrid.Weeks).ToArray();
+    private static readonly int[] DayIndexes = Enumerable.Range(0, ContributionGrid.Days).ToArray();
+
+    private readonly ContributionGrid _grid = new(DateOnly.FromDateTime(DateTime.UtcNow));
+
+    // Connection
+    private string _token = "";
+    private string _repository = "contribution-graphics";
+    private string _owner = "";
+    private string _authorName = "";
+    private string _authorEmail = "";
+    private int _multiplier = 1;
+    private int _maxDaily;
+    private bool _connected;
+
+    // Painting
+    private int _brush = 4;
+    private int _paintLevel;
+    private bool _painting;
+    private string _preset = Presets.Shapes.Keys.First();
+    private string _text = "HELLO";
+    private int _offset = 2;
+
+    // Status
+    private bool _busy;
+    private string? _status;
+    private string? _error;
+    private string? _resultUrl;
+    private CancellationTokenSource? _cts;
+
+    private int PixelCount => _grid.Pixels().Count();
+    private int TotalCommits => _grid.Pixels().Sum(p => p.Level) * Math.Max(1, _multiplier);
+
+    private bool CanPush => _connected && !_busy && PixelCount > 0
+                            && !string.IsNullOrWhiteSpace(_repository)
+                            && !string.IsNullOrWhiteSpace(_authorEmail);
+
+    private void StartPaint(int week, int day)
+    {
+        _painting = true;
+        _paintLevel = _grid.Get(week, day) == _brush ? 0 : _brush;
+        _grid.Set(week, day, _paintLevel);
+    }
+
+    private void ContinuePaint(int week, int day)
+    {
+        if (_painting)
+        {
+            _grid.Set(week, day, _paintLevel);
+        }
+    }
+
+    private void StopPaint() => _painting = false;
+
+    private void StampPreset() => _grid.Stamp(Presets.Shapes[_preset], Math.Clamp(_offset, 0, 52));
+
+    private void StampText() =>
+        _grid.Stamp(Presets.Text(_text, _brush == 0 ? 4 : _brush), Math.Clamp(_offset, 0, 52), skipZeros: true);
+
+    private async Task ConnectAsync()
+    {
+        await RunAsync("Connecting…", async ct =>
+        {
+            var user = await GitHub.GetUserAsync(_token.Trim(), ct);
+            _owner = user.Login;
+            _authorName = user.Name ?? user.Login;
+            _authorEmail = user.NoReplyEmail;
+            _maxDaily = await GitHub.GetMaxDailyContributionsAsync(_token.Trim(), user.Login, ct);
+            _multiplier = Math.Max(1, (int)Math.Ceiling(_maxDaily / 4.0));
+            _connected = true;
+            _status = $"Connected as {user.Login}.";
+        });
+    }
+
+    private async Task PushAsync()
+    {
+        _resultUrl = null;
+        await RunAsync("Checking repository…", async ct =>
+        {
+            var token = _token.Trim();
+            var repo = _repository.Trim();
+
+            if (!await GitHub.IsRepositoryEmptyAsync(token, _owner, repo, ct))
+            {
+                throw new InvalidOperationException(
+                    $"{_owner}/{repo} already has commits. Use a new, empty repository so nothing real gets overwritten.");
+            }
+
+            var progress = new Progress<string>(message =>
+            {
+                _status = message;
+                _ = InvokeAsync(StateHasChanged);
+            });
+
+            var request = new PushRequest(_owner, repo, token, _authorName, _authorEmail,
+                _grid.StartDate.AddDays(-1), BuildPlan());
+
+            var count = await Pusher.PushAsync(request, progress, ct);
+            _status = $"Pushed {count} commits.";
+            _resultUrl = $"https://github.com/{_owner}/{repo}";
+        });
+    }
+
+    private async Task DownloadScriptAsync()
+    {
+        var script = ScriptExporter.Bash(_owner, _repository.Trim(), _authorName, _authorEmail,
+            _grid.StartDate.AddDays(-1), BuildPlan());
+        await JS.InvokeVoidAsync("contributionArt.download", "contribution-art.sh", script);
+    }
+
+    private List<CommitPlanItem> BuildPlan() =>
+        _grid.Pixels().Select(p => new CommitPlanItem(p.Date, p.Level * Math.Max(1, _multiplier))).ToList();
+
+    private async Task RunAsync(string startMessage, Func<CancellationToken, Task> action)
+    {
+        _busy = true;
+        _error = null;
+        _status = startMessage;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            await action(_cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _status = "Cancelled. Nothing was pushed.";
+        }
+        catch (Exception ex)
+        {
+            _status = null;
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+            _cts.Dispose();
+            _cts = null;
+        }
+    }
+
+    private string MonthLabel(int week)
+    {
+        var sunday = _grid.DateAt(week, 0);
+        return sunday.Day <= 7 ? sunday.ToString("MMM", CultureInfo.InvariantCulture) : "";
+    }
+
+    private string CellTitle(int week, int day, int level, bool future)
+    {
+        var date = _grid.DateAt(week, day).ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture);
+        return future ? $"{date} (future)" : $"{date}: level {level}, {level * Math.Max(1, _multiplier)} commits";
+    }
+
+    public void Dispose() => _cts?.Cancel();
+}
