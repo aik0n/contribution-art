@@ -4,26 +4,67 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <script>
+        (function () {
+            const storageKey = "contributionArt.theme";
+            const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+            function normalize(mode) {
+                return mode === "light" || mode === "dark" ? mode : "auto";
+            }
+
+            function readStoredMode() {
+                try {
+                    return normalize(localStorage.getItem(storageKey));
+                } catch {
+                    return "auto";
+                }
+            }
+
+            let currentMode = readStoredMode();
+
+            function applyTheme() {
+                const isDark = currentMode === "dark" || (currentMode === "auto" && darkQuery.matches);
+                document.documentElement.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+            }
+
+            window.contributionArt = {
+                getThemeMode: function () {
+                    return currentMode;
+                },
+                setThemeMode: function (mode) {
+                    currentMode = normalize(mode);
+                    try {
+                        localStorage.setItem(storageKey, currentMode);
+                    } catch {
+                        // Storage can be blocked. The choice then lasts until the page is reloaded.
+                    }
+                    applyTheme();
+                },
+                download: function (fileName, text) {
+                    const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }
+            };
+
+            darkQuery.addEventListener("change", applyTheme);
+            applyTheme();
+        })();
+    </script>
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
     <title>Contribution Art</title>
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
-<body>
+<body class="bg-body-tertiary">
     <Routes @rendermode="InteractiveServer" />
+    <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_framework/blazor.web.js"></script>
-    <script>
-        window.contributionArt = {
-            download: function (fileName, text) {
-                const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            }
-        };
-    </script>
 </body>
 </html>
